@@ -1,7 +1,8 @@
-CACHE_FILE="volatile/where-is-emacs-module-dot-h.txt"
-ITERATION_FILE="volatile/iteration-number.txt"
+# See the section "Why ./compile.sh is complex" in the README
 
-# Make sure some folders exist
+CACHE_FILE="volatile/where-is-emacs-module-dot-h.txt"
+
+# Ensure some folders exist
 mkdir -p volatile lib
 
 # Check for a valid cached path to emacs-module.h
@@ -27,36 +28,27 @@ echo "Include directory: $EMACS_INCLUDE_DIR"
 SOURCE_FILE=${1:-"example.cpp"}
 OUTPUT_FILE=${SOURCE_FILE%.*}.so
 
-# Get or initialize the iteration number
-if [ -f "$ITERATION_FILE" ] && [[ $(cat "$ITERATION_FILE") =~ ^[0-9]+$ ]]; then
-    ITERATION=$(cat "$ITERATION_FILE")
-    ITERATION=$((ITERATION + 1))
-else
-    ITERATION=1
-fi
-
-# Save the new iteration number
-echo $ITERATION > "$ITERATION_FILE"
-echo "Using iteration number: $ITERATION"
-
-OUTPUT_LINK=${SOURCE_FILE%.*}.ln-$ITERATION.so
+# Generate a timestamp for the symlink,
+# so that Emacs does not recognize its name, and reloads it.
+TIMESTAMP=$(date +%Y%m%d%H%M%S)
+OUTPUT_LINK=${SOURCE_FILE%.*}.ln-$TIMESTAMP.so
 
 # Compile the C++ file into a shared library
 echo "Compiling $SOURCE_FILE to lib/$OUTPUT_FILE"
 g++ -std=c++17 -Wall -I"$EMACS_INCLUDE_DIR" -shared -fpic "$SOURCE_FILE" -o "lib/$OUTPUT_FILE"
 
 if [ $? -eq 0 ]; then
-    # Create symlink with iteration number
+    # Create symlink with timestamp
     rm -f lib/${SOURCE_FILE%.*}.ln-*.so  # Remove any previous symlinks
     ln -s $OUTPUT_FILE lib/$OUTPUT_LINK
     echo "Compilation successful with link: lib/$OUTPUT_LINK"
 
-    # Generate a new test.el file with updated link
+    # Generate a new load.el file with updated link
     cat > volatile/load.el << EOF
 (module-load "$(pwd)/lib/$OUTPUT_LINK")
 EOF
 
-    echo "Updated test.el with new module path"
+    echo "Updated volatile/load.el with new module path"
 else
     echo "Compilation failed."
     exit 1

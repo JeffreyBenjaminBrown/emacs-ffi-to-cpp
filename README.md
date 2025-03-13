@@ -3,20 +3,6 @@
 Run `compile.sh`, then open and evaluate `test.el` in Emacs.
 
 
-## PITFALL: Reloading external modules in Emacs sucks
+## PITFALL: Why ./compile.sh is complex
 
-At the top of `test.el` there is the following line:
-```
-(module-load "/home/jeff/code/emacs-ffi-to-cpp/ln.so")
-```
-
-Once that has been evaluated, reevaluating it has no effect,
-because Emacs caches the result.
-The workaround I have been using
-is to use a series of symbolic links to the relevant .so file:
-ln.so, l1.so, l2.so ...
-Thus each recompilation step involves three steps:
-
-  * recompiling
-  * dcreating a new symlink
-  * editing `test.el` to load the new symlink
+Reloading external modules in Emacs sucks. If you rerun `module-load` in Emacs, nothing happens, because Emacs caches the result. My workaround is to create a symlink with a number in its name, pointing to the shared object file of interest, and load that each time. This explains some of the files that appear in the `./volatile` folder: One is the load command to run in Emacs, and another is the iteration number. (The third, `where-is-emacs-module-dot-h.txt`, is only necessary because I'm using NixOS.)

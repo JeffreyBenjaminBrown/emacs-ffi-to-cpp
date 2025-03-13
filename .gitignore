@@ -1,3 +1,5 @@
 *.so
-/where-is-emacs-module-dot-h.txt
 *~
+/unsolved
+/volatile/
+/where-is-emacs-module-dot-h.txt
