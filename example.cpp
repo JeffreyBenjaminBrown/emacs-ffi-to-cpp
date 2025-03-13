@@ -1,8 +1,10 @@
 #include <emacs-module.h>
 #include <string>
 #include <algorithm>
+#include <vector>
 
 int plugin_is_GPL_compatible;
+
 
 static int add_one(int num) {
   return num + 1; }
@@ -32,23 +34,27 @@ static emacs_value emacs_reverse_second
     emacs_value args[],
     void *data) noexcept {
 
-    // Get the size of the second string
+    // Get size of the second string
     ptrdiff_t size;
     env->copy_string_contents(env, args[1], NULL, &size);
 
-    // Make a buffer for it
-    std::string second_str(size, '\0');
-    env->copy_string_contents(env, args[1], &second_str[0], &size);
+    // Make a buffer for it (with space for null terminator)
+    std::vector<char> buffer(size);
+
+    // Copy the string into that buffer
+    env->copy_string_contents(env, args[1], buffer.data(), &size);
+
+    // Make a C++ string, which handles null terminators properly
+    std::string second_str(buffer.data());
 
     // Reverse it
     std::string result =
       reverse_second_string("ignored", second_str);
 
-    // Return the reversed string as an Emacs value
-    return env->make_string
-      ( env,
-        result.c_str(),
-        result.length()); }
+    // Return the reversed string
+    return env->make_string ( env,
+			      result.c_str(),
+			      result.length() ); }
 
 extern "C" int emacs_module_init
   (struct emacs_runtime *ert) noexcept {
