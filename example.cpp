@@ -1,7 +1,6 @@
 #include <emacs-module.h>
 #include <string>
 #include <algorithm>
-#include <vector>
 
 int plugin_is_GPL_compatible;
 
@@ -34,24 +33,17 @@ static emacs_value emacs_reverse_second
     emacs_value args[],
     void *data) noexcept {
 
-    // Get size of the second string
-    ptrdiff_t size;
+    ptrdiff_t size; // size of the second string
     env->copy_string_contents(env, args[1], NULL, &size);
 
-    // Make a buffer for it (with space for null terminator)
-    std::vector<char> buffer(size);
+    std::string second_str(size - 1, '\0');
+    env->copy_string_contents ( env,
+			        args[1],
+			        &second_str[0], // puts string here
+			        &size);
 
-    // Copy the string into that buffer
-    env->copy_string_contents(env, args[1], buffer.data(), &size);
-
-    // Make a C++ string, which handles null terminators properly
-    std::string second_str(buffer.data());
-
-    // Reverse it
     std::string result =
-      reverse_second_string("ignored", second_str);
-
-    // Return the reversed string
+      reverse_second_string ("ignored", second_str);
     return env->make_string ( env,
 			      result.c_str(),
 			      result.length() ); }
@@ -61,30 +53,37 @@ extern "C" int emacs_module_init
 
     emacs_env *env = ert->get_environment(ert);
 
-    // Make and register the add-one function
+    // Make and register add-one, with an array for its arguments
     emacs_value func = env->make_function
       (env, 1, 1, emacs_add_one,
        "Add 1 to the given number.", NULL);
     emacs_value symbol = env->intern(env, "add-one");
-
-    // Make an array for arguments
     emacs_value args[2] = {symbol, func};
-    env->funcall(env, env->intern(env, "defalias"), 2, args);
+    env->funcall ( env,
+		   env->intern(env, "defalias"),
+		   2,
+		   args);
 
-    // Make and register the reverse-second function
+    // Make and register reverse-second, with an array for its args.
+    // PITFALL: Each function appears to need a separate args array.
     emacs_value func2 = env->make_function
       (env, 2, 2, emacs_reverse_second,
        "Reverse second string, ignore first.", NULL);
     emacs_value symbol2 = env->intern(env, "reverse-second");
-
-    // Make an array for arguments
     emacs_value args2[2] = {symbol2, func2};
-    env->funcall(env, env->intern(env, "defalias"), 2, args2);
+    env->funcall ( env,
+		   env->intern(env, "defalias"),
+		   2,
+		   args2);
 
     // Have Emacs say so when the module loads
-    emacs_value msg = env->make_string(env, "C++ module loaded successfully", 29);
+    emacs_value msg = env->make_string
+      (env, "C++ module loaded successfully", 29);
     emacs_value msg_args[1] = {msg};
-    env->funcall(env, env->intern(env, "message"), 1, msg_args);
+    env->funcall ( env,
+		   env->intern(env, "message"),
+		   1,
+		   msg_args);
 
     return 0;
 }
