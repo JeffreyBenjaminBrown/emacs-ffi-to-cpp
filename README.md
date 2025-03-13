@@ -15,6 +15,8 @@ because Emacs caches the result.
 The workaround I have been using
 is to use a series of symbolic links to the relevant .so file:
 ln.so, l1.so, l2.so ...
-Thus each recompilation step involves recompiling,
-creating a new symlink,
-and editing `test.el` to load the new symlink.
+Thus each recompilation step involves three steps:
+
+  * recompiling
+  * dcreating a new symlink
+  * editing `test.el` to load the new symlink
