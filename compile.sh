@@ -27,14 +27,16 @@ echo "Include directory: $EMACS_INCLUDE_DIR"
 # Get source file from command line or use default
 SOURCE_FILE=${1:-"example.cpp"}
 OUTPUT_FILE=${SOURCE_FILE%.*}.so
+OUTPUT_LINK=${SOURCE_FILE%.*}.ln-1.so
 
 # Compile the C++ file into a shared library
-echo "Compiling $SOURCE_FILE to $OUTPUT_FILE"
-g++ -std=c++17 -Wall -I"$EMACS_INCLUDE_DIR" -shared -fpic "$SOURCE_FILE" -o "$OUTPUT_FILE"
+echo "Compiling $SOURCE_FILE to lib/$OUTPUT_FILE"
+g++ -std=c++17 -Wall -I"$EMACS_INCLUDE_DIR" -shared -fpic "$SOURCE_FILE" -o "lib/$OUTPUT_FILE"
 
 if [ $? -eq 0 ]; then
-    echo "Compilation successful: $OUTPUT_FILE created"
+    ln -s $OUTPUT_FILE lib/$OUTPUT_LINK
+    echo "Compilation successful."
 else
-    echo "Compilation failed"
+    echo "Compilation failed."
     exit 1
 fi
